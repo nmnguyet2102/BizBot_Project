@@ -20,6 +20,10 @@ TOKEN = os.getenv("BOT_TOKEN")   # <-- thay cho TOKEN = "------"
 if not TOKEN:
     raise ValueError("❌ Không tìm thấy BOT_TOKEN trong file .env")
 
+from services.db_service import init_db
+
+init_db()
+
 # cấu hình logging
 logging.basicConfig(level=logging.INFO)
 
@@ -96,6 +100,23 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await msg.edit_text(
         f"📄 OCR đọc được:\n\n{preview_text}\n\n🔎 Confidence: {confidence}"
+    )
+
+ # =========================
+    # SAVE TO DATABASE
+    # =========================
+    expense_id = db_service.insert_expense(
+        user_id=user_id,
+        vendor=None,
+        amount=None,
+        image_path=image_path,
+        raw_text_list=text_lines
+    )
+
+    logging.info(f"Saved expense ID: {expense_id}")
+
+    await update.message.reply_text(
+        f"✅ Đã lưu hóa đơn với ID: {expense_id}"
     )
 
 # tạo bot
