@@ -1,2 +1,2 @@
 # config_example.py
-ALLOWED_USERS = [123456789]
+ALLOWED_USERS = [id_nguyet, id_hien, id_hai]

@@ -7,6 +7,7 @@ venv/
 
 # Env file
 .env
+config.py
 
 # Database / generated files
 receipts/
