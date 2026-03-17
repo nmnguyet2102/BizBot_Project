@@ -5,3 +5,5 @@ numpy
 pillow
 pandas
 python-dotenv
+google-generativeai
+paddlepaddle
