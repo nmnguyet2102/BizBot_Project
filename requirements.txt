@@ -1,0 +1,7 @@
+paddleocr
+python-telegram-bot>=20.0
+opencv-python
+numpy
+pillow
+pandas
+python-dotenv

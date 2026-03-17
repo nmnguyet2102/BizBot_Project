@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Env file
+.env
+
+# Database / generated files
+receipts/
+database/*.db
+*.db
+
+# IDE
+.vscode/
+
+# Node (nếu có backend JS)
+node_modules/
