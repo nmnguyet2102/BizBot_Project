@@ -106,7 +106,7 @@ def process_receipt(img_path):
             ai_cleaned_text = van_ban_nhap 
 
     return {
-        "text_lines_raw": text_lines,
+        "text_lines": text_lines,
         "confidence": round(avg_conf, 2),
         "ai_cleaned_text": ai_cleaned_text
     }

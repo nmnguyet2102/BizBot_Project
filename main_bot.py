@@ -25,12 +25,43 @@ from services.db_service import init_db
 init_db()
 
 # cấu hình logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO
+)
 
+
+# ==========================================
+# HELPER: chuyển cleaned text -> list dòng sạch
+# ==========================================
+def cleaned_text_to_lines(ai_cleaned_text: str):
+    """
+    Chuyển text Gemini trả về thành list[str] để parser dùng được.
+    Loại bỏ dòng trống, bullet, markdown cơ bản.
+    """
+    if not ai_cleaned_text:
+        return []
+
+    lines = []
+    for line in ai_cleaned_text.splitlines():
+        line = line.strip()
+
+        if not line:
+            continue
+
+        # bỏ markdown/bullet đơn giản
+        line = line.lstrip("-•* ").strip()
+
+        # bỏ dấu table markdown nếu có
+        if line.startswith("|") and line.endswith("|"):
+            line = line.strip("|").strip()
+
+        if line:
+            lines.append(line)
+
+    return lines
 
 # handler /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     user_id = update.effective_user.id
 
     if user_id not in ALLOWED_USERS:
@@ -87,6 +118,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text_lines = ocr_result["text_lines"]
     confidence = ocr_result["confidence"]
+    ai_cleaned_text = ocr_result.get("ai_cleaned_text", "")  
 
     logging.info(f"OCR result: {text_lines}")
 
@@ -95,10 +127,30 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.edit_text("❌ Không đọc được nội dung từ ảnh.")
         return
 
+ # =========================
+    # DÙNG CLEANED TEXT CHO PARSER
+    # =========================
+    cleaned_lines = cleaned_text_to_lines(ai_cleaned_text)   # <-- THÊM
+
+    if cleaned_lines:
+        parsed_data = parser_service.extract_data(cleaned_lines)   # <-- THÊM
+    else:
+        parsed_data = parser_service.extract_data(text_lines)      # <-- THÊM
+
+    vendor = parsed_data["vendor"]   # <-- THÊM
+    amount = parsed_data["amount"]   # <-- THÊM
+
     # hiển thị tối đa 10 dòng
     preview_text = "\n".join(text_lines[:10])
 
-    await msg.edit_text(
+    # thử cập nhật trạng thái hoàn tất, nếu timeout thì bỏ qua
+    try:
+        await msg.edit_text("✅ OCR hoàn tất, đang lưu dữ liệu...")
+    except Exception as e:
+        logging.warning(f"Không thể edit loading message: {e}")
+
+    # gửi message mới thay vì edit nguyên nội dung dài
+    await update.message.reply_text(
         f"📄 OCR đọc được:\n\n{preview_text}\n\n🔎 Confidence: {confidence}"
     )
 
@@ -107,8 +159,8 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # =========================
     expense_id = db_service.insert_expense(
         user_id=user_id,
-        vendor=None,
-        amount=None,
+        vendor=vendor,
+        amount=amount,
         image_path=image_path,
         raw_text_list=text_lines
     )
@@ -116,7 +168,9 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"Saved expense ID: {expense_id}")
 
     await update.message.reply_text(
-        f"✅ Đã lưu hóa đơn với ID: {expense_id}"
+         f"✅ Đã lưu hóa đơn với ID: {expense_id}\n"
+        f"🏪 Vendor: {vendor}\n"
+        f"💰 Amount: {amount}"
     )
 
 # tạo bot
