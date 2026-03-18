@@ -11,10 +11,18 @@ except Exception as e:
     print("❌ OCR failed:", e)
     exit()
 
-print("\n2. Đang chạy Parser Service...")
+print("\n2. BẢN OCR THÔ:")
+print(ocr_data["text_lines_raw"])
+
+print("\n3. BẢN ĐÃ ĐƯỢC GEMINI LÀM SẠCH:")
+print(ocr_data["ai_cleaned_text"])
+
+print("\n4. Đang chạy Parser Service...")
 try:
-    parsed_data = parser_service.extract_data(ocr_data["text_lines"])
-    print("\n3. KẾT QUẢ CUỐI CÙNG:")
+    cleaned_lines = ocr_data["ai_cleaned_text"].splitlines()
+    parsed_data = parser_service.extract_data(cleaned_lines)
+
+    print("\n5. KẾT QUẢ CUỐI CÙNG:")
     print(parsed_data)
 except Exception as e:
     print("❌ Parser failed:", e)
