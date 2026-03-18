@@ -154,9 +154,21 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"📄 OCR đọc được:\n\n{preview_text}\n\n🔎 Confidence: {confidence}"
     )
 
- # =========================
-    # SAVE TO DATABASE
+# =========================
+    # PARSE DATA (Não của Hải ở đây!)
     # =========================
+    parsed_data = parser_service.extract_data(text_lines)
+    vendor = parsed_data["vendor"]
+    amount = parsed_data["amount"]
+
+
+    # 1. Gọi Parser để trích xuất thông tin
+    parsed_data = parser_service.extract_data(text_lines)
+    vendor = parsed_data["vendor"]
+    amount = parsed_data["amount"]
+
+
+    # 2. Lưu vào Database với dữ liệu đã trích xuất
     expense_id = db_service.insert_expense(
         user_id=user_id,
         vendor=vendor,
@@ -165,12 +177,15 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         raw_text_list=text_lines
     )
 
+
     logging.info(f"Saved expense ID: {expense_id}")
 
+
+    # 3. Phản hồi thông tin chi tiết cho người dùng
     await update.message.reply_text(
-         f"✅ Đã lưu hóa đơn với ID: {expense_id}\n"
-        f"🏪 Vendor: {vendor}\n"
-        f"💰 Amount: {amount}"
+        f"✅ Đã lưu hóa đơn thành công!\n"
+        f"🏢 Cửa hàng: {vendor}\n"
+        f"💰 Số tiền: {amount:,} VND"
     )
 
 # tạo bot
